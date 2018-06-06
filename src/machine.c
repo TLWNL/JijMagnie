@@ -10,6 +10,7 @@ static uint32_t swap_uint32(uint32_t num)
 int init_ijvm(char *binary_file)
 {
   // Implement loading of binary here FOR MODULE 1
+
 	FILE *fp;
 	//uint32_t size;
 	long filelength;							// Change this to filesize
