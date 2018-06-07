@@ -4,18 +4,18 @@
 
 static uint32_t swap_uint32(uint32_t num)
 {
-	return ((num>>24)&0x0ff) | ((num<<8)&0x0ff0000) | ((num>>8)&0xff00) | ((num<<24)&0xff000000);
+	return ((num>>24)&0xff) | ((num<<8)&0xff0000) | ((num>>8)&0xff00) | ((num<<24)&0xff000000);
 }
 
 int init_ijvm(char *binary_file)
 {
   // Implement loading of binary here FOR MODULE 1
-
+  
 	FILE *fp;
-	uint32_t size;
+	//uint32_t size;
 	long filelength;							// Change this to filesize
-	char *buffer;
-	uint32_t result;						
+	uint32_t *buffer;				
+	int amount_of_cycles;						// Amount of cycles needed to run through the buffer
 
 	fp = fopen(binary_file, "rb");				// Opens the file in binary mode 
 	
@@ -27,45 +27,26 @@ int init_ijvm(char *binary_file)
 	printf("The total size of the binary file = %ld bytes\n", filelength);
 	rewind(fp);									// Jump back to the beginning of the file 
 
-	// Reads the 32-bit magic number
-	/*fread(&size, filelength, 1, fp);
-	size = swap_uint32(size);
-	*/
 	// Allocate memory for the entire file 
-	buffer = (char*) malloc(filelength);		// Why (char*) malloc???
+	buffer = (uint32_t*) malloc(filelength+1);
 	//Add error checking here
 
-	// Copy the file into the buffer 
-	fread(buffer,sizeof(uint32_t), 1, fp);
-	//result = swap_uint32(result);
-	
-	/*
-	fread(&result, sizeof(uint32_t),1 , fp);
-	result = swap_uint32(result);
-	*/
+	// Copy a word into the buffer 
+	fread(buffer,sizeof(uint32_t), filelength, fp);
+
 	fclose(fp);
 
-	//printf("The magic number is: %x \n", size);
+	amount_of_cycles = filelength/4;
 
 	// Print the buffered data 
-	printf("Total File in Hex:\n");
-	for (int i = 0; i < filelength; i++)
+	for (int i = 0; i < amount_of_cycles+1; i++)
 	{
-		result += buffer[i];
-		printf("%x", buffer[i]);
+		buffer[i] = swap_uint32(buffer[i]);
+		printf("Current buffer item: %x \n", buffer[i]);
 	}
-	/*
-	printf("Result print: \n");
-	for (int i = 0; i< filelength; i++)
-	{
-		printf("%x", result);
-	}
-	*/
-	printf("\n %x \n", *buffer);
-
+	
 	free(buffer);
 	return 0;	
-	//printf("Magic Number in Hex: %02x", size);
 }
 
 void destroy_ijvm()
