@@ -12,7 +12,7 @@ int init_ijvm(char *binary_file)
   // Implement loading of binary here FOR MODULE 1
 
 	FILE *fp;
-	//uint32_t size;
+	uint32_t size;
 	long filelength;							// Change this to filesize
 	char *buffer;
 	uint32_t result;						
@@ -28,28 +28,41 @@ int init_ijvm(char *binary_file)
 	rewind(fp);									// Jump back to the beginning of the file 
 
 	// Reads the 32-bit magic number
-	/*
-	fread(&size, filelength, 1, fp);
+	/*fread(&size, filelength, 1, fp);
 	size = swap_uint32(size);
 	*/
-
 	// Allocate memory for the entire file 
 	buffer = (char*) malloc(filelength);		// Why (char*) malloc???
 	//Add error checking here
 
 	// Copy the file into the buffer 
-	result = fread(buffer,filelength, 1, fp);
+	fread(buffer,sizeof(uint32_t), 1, fp);
+	//result = swap_uint32(result);
+	
+	/*
+	fread(&result, sizeof(uint32_t),1 , fp);
 	result = swap_uint32(result);
-
+	*/
 	fclose(fp);
+
+	//printf("The magic number is: %x \n", size);
 
 	// Print the buffered data 
 	printf("Total File in Hex:\n");
-	printf("%u", result);
-	/*for (int i = 0; i < filelength; i++)
+	for (int i = 0; i < filelength; i++)
 	{
-		printf("%02x", buffer[i]);
-	}*/
+		result += buffer[i];
+		printf("%x", buffer[i]);
+	}
+	/*
+	printf("Result print: \n");
+	for (int i = 0; i< filelength; i++)
+	{
+		printf("%x", result);
+	}
+	*/
+	printf("\n %x \n", *buffer);
+
 	free(buffer);
 	return 0;	
 	//printf("Magic Number in Hex: %02x", size);
