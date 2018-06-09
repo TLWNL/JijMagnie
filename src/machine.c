@@ -4,6 +4,12 @@
 #include <assert.h>
 
 uint32_t *buffer;
+uint32_t byte1;				// Check if you can make these local variables, STRUCT?! That may look kewl
+uint32_t byte2;
+uint32_t byte3;
+uint32_t byte4;
+int program_counter = 0;
+
 long filelength;
 int amount_of_cycles;
 
@@ -57,155 +63,201 @@ void destroy_ijvm()
 
 void run()
 {
-	//get_text();
-	step();
+	for(int i = 2; i < amount_of_cycles+1; i++)
+	{
+		
+		//printf("Current buffer item: %02x \n", buffer[i]);
+		byte1 = (buffer[i]>>24) & 0xff;
+		step();
+		//printf("Byte 1: %02x\n", byte1);
+		byte2 = (buffer[i]>> 16) & 0xff;
+		step();
+		//printf("Byte 2: %02x\n", byte2);
+		byte3 = (buffer[i]>> 8) & 0xff;
+		step();
+		//printf("Byte 3: %02x\n", byte3);
+		byte4 = (buffer[i] & 0xff);
+		step();
+		//printf("Byte 4: %02x\n", byte4);
+	}	
 }
 
 
 bool step()
 {
-	uint32_t byte1;
-	uint32_t byte2;
-	uint32_t byte3;
-	uint32_t byte4;
-	int size_const_in_bytes;
-	int size_text_in_bytes;
-	int program_counter = 0;
-
-	//Step (Run though one by one) though all the instructions
-	// A good starting point is: loop through the text selection of the binary.
-	// Print the name of every instruction you have encountered
-	// If you encounter a byte that is not an instruction, skip that byte.
-	// Don't worry about arguments that have the same value as an instuction, just
-	// print the name of the corresponding instruction.
-	// Read one byte, determine instruction. ect. ect.
-	// Also now is the perfect time to implement a program counter mechanism.
-
-	// Buffered data is in words of 2 bytes.
-	// Convert to string, then split it into two vars
-
-	// binary file = <32-bit magic number>
-	// 2 blocks 1) Constants, 2) TEXT.
-	// block = <32-bit origin> <32-bit byte size> <data>
-
-	// Size is in bytes, 2 bytes per word, so move forward int version of size / 2.
+	uint32_t current_byte;
 	
-	// Buffer [0] and Buffer 1 can be discarded
-	
-	for(int i = 2; i < amount_of_cycles+1; i++)
+	for(int i=0; i<2; i++)
 	{
-		
-		printf("Current buffer item: %02x \n", buffer[i]);
-		byte1 = (buffer[i]>>24) & 0xff;
-		printf("Byte 1: %02x\n", byte1);
-		byte2 = (buffer[i]>> 16) & 0xff;
-		printf("Byte 2: %02x\n", byte2);
-		byte3 = (buffer[i]>> 8) & 0xff;
-		printf("Byte 3: %02x\n", byte3);
-		byte4 = (buffer[i] & 0xff);
-		printf("Byte 4: %02x\n", byte4);
-
-		switch(byte1)
+		if (i == 0)
 		{
-			case '0x10'		// Takes byte arg
+			current_byte = byte1;
+		}
+		else
+		{
+			current_byte = byte3;
+		}
+		
+		switch(current_byte)
+		{
+			case 0x10: // Takes byte arg
 			{
-				printf("BIPUSH");
+				printf("BIPUSH\n");
+				program_counter = program_counter + 1;
+				break;
 			}
-			case '0x59'
+			case 0x59:
 			{
-				printf("DUP");
+				printf("DUP\n");
+				program_counter = program_counter + 1;
+				break;
 			}
-			case '0xfe'
+			case 0xfe:
 			{
-				printf("ERR");
+				printf("ERR\n");
+				program_counter = program_counter + 1;
+				break;
 			}
-			case '0xa7'
+			case 0xa7:
 			{
-				printf("GOTO")			// Takes short arg 
+				printf("GOTO\n");			// Takes short arg 
+				program_counter = program_counter + 1;
+				break;
 			}
-			case '0xff'
+			case 0xff:
 			{
-				printf("HALT");
+				printf("HALT\n");
+				program_counter = program_counter + 1;
+				break;
 			}
-			case '0x60'
+			case 0x60:
 			{
-				printf("IADD");
+				printf("IADD\n");
+				program_counter = program_counter + 1;
+				break;
 			}
-			case '0x7e'
+			case 0x7e:
 			{
-				printf("IAND");
+				printf("IAND\n");
+				program_counter = program_counter + 1;
+				break;
 			}
-			case '0x99'
+			case 0x99:
 			{
-				printf("IFEQ");			// Takes short arg 
+				printf("IFEQ\n");			// Takes short arg 
+				program_counter = program_counter + 1;
+				break;
 			}
-			case '0x9b'
+			case 0x9b:
 			{
-				printf("IFLT");			// Takes short arg 
+				printf("IFLT\n");			// Takes short arg 
+				program_counter = program_counter + 1;
+				break;
 			}
-			case '0x9f'
+			case 0x9f:
 			{
-				printf("IF_ICMPEQ");	// Takes short arg 
+				printf("IF_ICMPEQ\n");	// Takes short arg 
+				program_counter = program_counter + 1;
+				break;
 			}
-			case '0x84'
+			case 0x84:
 			{
-				printf("IINC");			// Takes byte byte arg 
+				printf("IINC\n");			// Takes byte byte arg 
+				program_counter = program_counter + 1;
+				break;
 			}
-			case '0x15'
+			case 0x15:
 			{
-				printf("ILOAD");		// Takes byte arg
+				printf("ILOAD\n");		// Takes byte arg
+				program_counter = program_counter + 1;
+				break;
 			}
-			case '0xfc'
+			case 0xfc:
 			{
-				printf("IN");
+				printf("IN\n");
+				program_counter = program_counter + 1;
+				break;
 			}
-			case '0xb6'
+			case 0xb6:
 			{
-				printf("INVOKEVIRTUAL");	// Takes short arg
+				printf("INVOKEVIRTUAL\n");	// Takes short arg
+				program_counter = program_counter + 1;
+				break;
 			}
-			case '0xb0'
+			case 0xb0:
 			{
-				printf("IOR");
+				printf("IOR\n");
+				program_counter = program_counter + 1;
+				break;
 			}
-			case '0xac'
+			case 0xac:
 			{
-				printf("IRETURN");
+				printf("IRETURN\n");
+				program_counter = program_counter + 1;
+				break;
 			}
-			case '0x36'
+			case 0x36:
 			{
-				printf("ISTORE");			// Takes byte arg
+				printf("ISTORE\n");			// Takes byte arg
+				program_counter = program_counter + 1;
+				break;
 			}
-			case '0x64'
+			case 0x64:
 			{
-				printf("ISUB");
+				printf("ISUB\n");
+				program_counter = program_counter + 1;
+				break;
 			}
-			case '0x13'
+			case 0x13:
 			{
-				printf("LDC_W");			// Takes short arg
+				printf("LDC_W\n");			// Takes short arg
+				program_counter = program_counter + 1;
+				break;
 			}
-			case '0x00'
+			case 0x00:
 			{
-				printf("NOP");
+				printf("NOP\n");
+				program_counter = program_counter + 1;			// Does the program counter get increased after 00?
+				break;
 			}
-			case '0xfd'
+			case 0xfd:
 			{
-				printf("OUT");
+				printf("OUT\n");
+				program_counter = program_counter + 1;
+				break;
 			}
-			case '0x57'
+			case 0x57:
 			{
-				printf("POP");
+				printf("POP\n");
+				program_counter = program_counter + 1;
+				break;
 			}
-			case '0x5f'
+			case 0x5f:
 			{
-				printf("SWAP");
+				printf("SWAP\n");
+				program_counter = program_counter + 1;
+				break;
 			}
-			case '0xc4'
+			case 0xc4:
 			{
-				printf("WIDE");
+				printf("WIDE\n");
+				program_counter = program_counter + 1;
+				break;
 			}
+			// Add EOF case
 
+			// Add \n case
+
+			// Change default to somtething that makes sense
+			default:
+			{
+				printf("This is the default message\n");
+				program_counter = program_counter + 1;
+				break;
+			}
 		}
 	}
+	get_program_counter();
 	return 0;
 }
 
@@ -218,6 +270,17 @@ byte_t *get_text()
 		printf("Current buffer item: %02x \n", buffer[i]);
 	}
 	return 0;
+}
+
+int get_program_counter()
+{
+	printf("The current program counter is: %d \n", program_counter);
+	return program_counter;
+}
+
+byte_t get_instruction()
+{
+	printf("The current instruction is: %02x \n", current_byte);
 }
 
 void set_input(FILE *fp)
