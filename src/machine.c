@@ -9,7 +9,7 @@ uint32_t byte2;
 uint32_t byte3;
 uint32_t byte4;
 int program_counter = 0;
-
+uint32_t current_byte;
 long filelength;
 int amount_of_cycles;
 
@@ -63,47 +63,57 @@ void destroy_ijvm()
 
 void run()
 {
-	for(int i = 2; i < amount_of_cycles+1; i++)
-	{
-		
+	for(int i = 0; i < amount_of_cycles+1; i++)
+	{		
 		//printf("Current buffer item: %02x \n", buffer[i]);
 		byte1 = (buffer[i]>>24) & 0xff;
-		step();
-		//printf("Byte 1: %02x\n", byte1);
 		byte2 = (buffer[i]>> 16) & 0xff;
-		step();
-		//printf("Byte 2: %02x\n", byte2);
 		byte3 = (buffer[i]>> 8) & 0xff;
-		step();
-		//printf("Byte 3: %02x\n", byte3);
 		byte4 = (buffer[i] & 0xff);
 		step();
-		//printf("Byte 4: %02x\n", byte4);
 	}	
 }
 
 
 bool step()
 {
-	uint32_t current_byte;
 	
-	for(int i=0; i<2; i++)
+	for(int i=0; i<4; i++)
 	{
-		if (i == 0)
+		switch(i)
 		{
-			current_byte = byte1;
+			case 0:
+			{
+				current_byte = byte1;
+				printf("Current byte = %02x \n", current_byte);
+				break;
+			}
+			case 1:
+			{
+				current_byte = byte2;
+				printf("Current byte = %02x \n", current_byte);
+				break;
+			}
+			case 2:
+			{
+				current_byte = byte3;
+				printf("Current byte = %02x \n", current_byte);
+				break;
+			}
+			case 3:
+			{
+				current_byte = byte4;
+				printf("Current byte = %02x \n", current_byte);
+				break;
+			}
 		}
-		else
-		{
-			current_byte = byte3;
-		}
-		
+		// BReakpoint
 		switch(current_byte)
 		{
 			case 0x10: // Takes byte arg
 			{
-				printf("BIPUSH\n");
-				program_counter = program_counter + 1;
+				printf("BIPUSH \n");
+				program_counter = program_counter + 2;
 				break;
 			}
 			case 0x59:
@@ -281,6 +291,8 @@ int get_program_counter()
 byte_t get_instruction()
 {
 	printf("The current instruction is: %02x \n", current_byte);
+
+	return current_byte;
 }
 
 void set_input(FILE *fp)
