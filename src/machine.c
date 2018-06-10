@@ -11,7 +11,7 @@ uint32_t byte4;
 int program_counter = 0;
 uint32_t current_byte;
 long filelength;
-int amount_of_cycles;
+int amount_of_words;
 
 
 static uint32_t swap_uint32(uint32_t num)
@@ -21,16 +21,13 @@ static uint32_t swap_uint32(uint32_t num)
 
 int init_ijvm(char *binary_file)
 {
-  // Implement loading of binary here FOR MODULE 1
-  
 	FILE *fp;			
 
 	fp = fopen(binary_file, "rb");				// Opens the file in binary mode 
-
 	// Get the file size
 	fseek(fp, 0 , SEEK_END);					// Jump to the end of the file
 	filelength = ftell(fp);						// Get the current byte offset
-	amount_of_cycles = filelength/4;
+	amount_of_words = filelength/4;
 	printf("The total size of the binary file = %ld bytes\n", filelength);
 	rewind(fp);									// Jump back to the beginning of the file 
 
@@ -42,7 +39,8 @@ int init_ijvm(char *binary_file)
 	fread(buffer,sizeof(uint32_t), filelength, fp);
 	fclose(fp);
 
-	for (int i=0; i<amount_of_cycles+1; i++)
+	// Change endian
+	for (int i=0; i<amount_of_words+1; i++)
 	{
 		buffer[i] = swap_uint32(buffer[i]);
 	}
@@ -53,6 +51,7 @@ int init_ijvm(char *binary_file)
 		fprintf(stderr, "Binary file not supported, only .ijvm files supported. Program aborted.\n");
 		return -1;
 	}
+
 	return 0;	
 }
 
@@ -63,21 +62,49 @@ void destroy_ijvm()
 
 void run()
 {
-	for(int i = 0; i < amount_of_cycles+1; i++)
+	int constant_size;
+	int j;
+
+	// Run through the buffer word for word
+	for(int i = 1; i < amount_of_words+1; i++)		// Do I read through an extra word here?
 	{		
-		//printf("Current buffer item: %02x \n", buffer[i]);
 		byte1 = (buffer[i]>>24) & 0xff;
 		byte2 = (buffer[i]>> 16) & 0xff;
 		byte3 = (buffer[i]>> 8) & 0xff;
 		byte4 = (buffer[i] & 0xff);
-		step();
+		
+		if(i == 1)
+		{
+			printf("The origin is %02x\n", buffer[i]);
+		}
+		// Start reading the constants
+		else if(i == 2)
+		{
+			constant_size = buffer[i];
+			printf("The size of the constant pool in bytes is: %d \n", constant_size);
+			uint32_t constants[constant_size];
+			for (j = 2; j < constant_size+2; j++)
+			{
+				constants[j] = buffer[i];
+			}
+			i += constant_size/4;
+		}
+		else if(i == constant_size/4 + 3)
+		{
+			printf("The size of the constant pool in hex is: %02x \n", buffer[i]);
+		}
+
+		else
+		{
+			step();
+		}
 	}	
 }
 
-
 bool step()
 {
-	
+	bool argument;
+
 	for(int i=0; i<4; i++)
 	{
 		switch(i)
@@ -85,35 +112,36 @@ bool step()
 			case 0:
 			{
 				current_byte = byte1;
-				printf("Current byte = %02x \n", current_byte);
+				//printf("Current byte = %02x \n", current_byte);
 				break;
 			}
 			case 1:
 			{
 				current_byte = byte2;
-				printf("Current byte = %02x \n", current_byte);
+				//printf("Current byte = %02x \n", current_byte);
 				break;
 			}
 			case 2:
 			{
 				current_byte = byte3;
-				printf("Current byte = %02x \n", current_byte);
+				//printf("Current byte = %02x \n", current_byte);
 				break;
 			}
 			case 3:
 			{
 				current_byte = byte4;
-				printf("Current byte = %02x \n", current_byte);
+				//printf("Current byte = %02x \n", current_byte);
 				break;
 			}
 		}
-		// BReakpoint
+		
 		switch(current_byte)
 		{
 			case 0x10: // Takes byte arg
 			{
 				printf("BIPUSH \n");
-				program_counter = program_counter + 2;
+				program_counter = program_counter + 1;
+				//argument_type = "byte";
 				break;
 			}
 			case 0x59:
@@ -262,7 +290,6 @@ bool step()
 			default:
 			{
 				printf("This is the default message\n");
-				program_counter = program_counter + 1;
 				break;
 			}
 		}
@@ -275,7 +302,7 @@ byte_t *get_text()
 {
 
 	// Print the buffered data 
-	for (int i = 0; i < amount_of_cycles+1; i++)
+	for (int i = 0; i < amount_of_words+1; i++)
 	{
 		printf("Current buffer item: %02x \n", buffer[i]);
 	}
