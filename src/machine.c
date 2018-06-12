@@ -57,8 +57,9 @@ int init_ijvm(char *binary_file)
 
 void destroy_ijvm()
 {
-  // Reset IJVM state FOR MODULE 1
-}
+  free(buffer);
+  exit(0);
+ }
 
 void run()
 {
@@ -75,7 +76,7 @@ void run()
 		
 		if(i == 1)
 		{
-			printf("The origin is %02x\n", buffer[i]);
+			printf("The origin of the constant pool is %02x\n", buffer[i]);
 		}
 		// Start reading the constants
 		else if(i == 2)
@@ -89,11 +90,14 @@ void run()
 			}
 			i += constant_size/4;
 		}
-		else if(i == constant_size/4 + 3)
+		else if(i == constant_size/4 + 3)			// This is the word directly after the constant pool: the origin of TEXT
 		{
-			printf("The size of the constant pool in hex is: %02x \n", buffer[i]);
+			printf("The origin of the TEXT pool is: %02x \n", buffer[i]);
 		}
-
+		else if(i == constant_size/4 + 4)			// This is the size of the text pool.
+		{
+			printf("The size of the TEXT pool is: %d \n", buffer[i]);
+		}
 		else
 		{
 			step();
@@ -103,10 +107,12 @@ void run()
 
 bool step()
 {
-	bool argument;
+	bool byte_argument = false;
+	bool short_argument;
 
 	for(int i=0; i<4; i++)
 	{
+
 		switch(i)
 		{
 			case 0:
@@ -134,14 +140,21 @@ bool step()
 				break;
 			}
 		}
+
+		if(byte_argument == true)
+		{
+			printf("Byte argument = %02x\n", current_byte);
+			byte_argument = false;
+			continue;
+		}
 		
-		switch(current_byte)
+		switch(current_byte)		// Check if increasing the i really works 
 		{
 			case 0x10: // Takes byte arg
 			{
 				printf("BIPUSH \n");
 				program_counter = program_counter + 1;
-				//argument_type = "byte";
+				byte_argument = true;
 				break;
 			}
 			case 0x59:
@@ -158,15 +171,18 @@ bool step()
 			}
 			case 0xa7:
 			{
-				printf("GOTO\n");			// Takes short arg 
+				printf("GOTO\n");			// Takes short arg ( 2 bytes )
 				program_counter = program_counter + 1;
+				short_argument = true;
+				i += 2;
 				break;
 			}
 			case 0xff:
 			{
+				destroy_ijvm();
 				printf("HALT\n");
-				program_counter = program_counter + 1;
-				break;
+				//program_counter = program_counter + 1;
+				//break;
 			}
 			case 0x60:
 			{
@@ -184,12 +200,14 @@ bool step()
 			{
 				printf("IFEQ\n");			// Takes short arg 
 				program_counter = program_counter + 1;
+				short_argument = true;
 				break;
 			}
 			case 0x9b:
 			{
 				printf("IFLT\n");			// Takes short arg 
 				program_counter = program_counter + 1;
+				short_argument = true;
 				break;
 			}
 			case 0x9f:
@@ -202,12 +220,14 @@ bool step()
 			{
 				printf("IINC\n");			// Takes byte byte arg 
 				program_counter = program_counter + 1;
+				short_argument = true;
 				break;
 			}
 			case 0x15:
 			{
 				printf("ILOAD\n");		// Takes byte arg
 				program_counter = program_counter + 1;
+				byte_argument = true;
 				break;
 			}
 			case 0xfc:
@@ -220,6 +240,7 @@ bool step()
 			{
 				printf("INVOKEVIRTUAL\n");	// Takes short arg
 				program_counter = program_counter + 1;
+				short_argument = true;
 				break;
 			}
 			case 0xb0:
@@ -238,6 +259,7 @@ bool step()
 			{
 				printf("ISTORE\n");			// Takes byte arg
 				program_counter = program_counter + 1;
+				byte_argument = true;
 				break;
 			}
 			case 0x64:
@@ -250,12 +272,13 @@ bool step()
 			{
 				printf("LDC_W\n");			// Takes short arg
 				program_counter = program_counter + 1;
+				short_argument = true;
 				break;
 			}
 			case 0x00:
 			{
 				printf("NOP\n");
-				program_counter = program_counter + 1;			// Does the program counter get increased after 00?
+				//program_counter = program_counter + 1;			// Does the program counter get increased after 00?
 				break;
 			}
 			case 0xfd:
