@@ -28,7 +28,7 @@ int init_ijvm(char *binary_file)
 	fseek(fp, 0 , SEEK_END);					// Jump to the end of the file
 	filelength = ftell(fp);						// Get the current byte offset
 	amount_of_words = filelength/4;
-	printf("The total size of the binary file = %ld bytes\n", filelength);
+	//printf("The total size of the binary file = %ld bytes\n", filelength);
 	rewind(fp);									// Jump back to the beginning of the file 
 
 	// Allocate memory for the entire file 
@@ -76,13 +76,15 @@ void run()
 		
 		if(i == 1)
 		{
-			printf("The origin of the constant pool is %02x\n", buffer[i]);
+			//printf("The origin of the constant pool is %02x\n", buffer[i]);
+			continue;
 		}
 		// Start reading the constants
 		else if(i == 2)
 		{
 			constant_size = buffer[i];
-			printf("The size of the constant pool in bytes is: %d \n", constant_size);
+			//printf("The size of the constant pool in bytes is: %d \n", constant_size);
+			// Allocate memory for the constant array?
 			uint32_t constants[constant_size];
 			for (j = 2; j < constant_size+2; j++)
 			{
@@ -92,11 +94,13 @@ void run()
 		}
 		else if(i == constant_size/4 + 3)			// This is the word directly after the constant pool: the origin of TEXT
 		{
-			printf("The origin of the TEXT pool is: %02x \n", buffer[i]);
+			//printf("The origin of the TEXT pool is: %02x \n", buffer[i]);
+			continue;
 		}
 		else if(i == constant_size/4 + 4)			// This is the size of the text pool.
 		{
-			printf("The size of the TEXT pool is: %d \n", buffer[i]);
+			//printf("The size of the TEXT pool is: %d \n", buffer[i]);
+			continue;
 		}
 		else
 		{
@@ -143,7 +147,7 @@ bool step()
 
 		if(byte_argument == true)
 		{
-			printf("Byte argument = %02x\n", current_byte);
+			//printf("Byte argument = %02x\n", current_byte);
 			byte_argument = false;
 			continue;
 		}
@@ -317,7 +321,7 @@ bool step()
 			}
 		}
 	}
-	get_program_counter();
+	//get_program_counter();
 	return 0;
 }
 
