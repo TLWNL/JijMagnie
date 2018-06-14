@@ -3,61 +3,102 @@
 #include <stdio.h>
 #include <assert.h>
 #include <limits.h>
+#include <customincludes.h>
 
 int program_counter = 0;
 byte_t current_byte;
 bool byte_argument;
 bool short_argument;
+byte_t stored_short_argument[4];
 
-// Create a linked list stack
+// Create a linked list
 struct node
 {
 	word_t data;
-	struct node* next;
-}
+	struct node *next;
+};
+typedef struct node node;
+
+node *top;
 
 // Initialize the stack
-void init(struct node* head)
+void init()
 {
-	head = NULL;
+	top = NULL;
 }
 
-// Push an element into the stack
-struct node* push(struct node* head, word_t data)
+/* Push operation:
+** 1. Make a new node.
+** 2. Give the 'data' of the new node its value.
+** 3. Point the 'next' of the new node to the top of the stack.
+** 4. Make the 'top' pointer point to this new node.
+*/
+void push(word_t value)
 {
-	struct node* tmp = (struct node*) malloc(sizeof(struct node));
-	if(tmp == NULL)
-	{
-		exit(0);
-	}
-	tmp->data = data;
-	tmp->next = head;
-	head = tmp;
-	return head;
+	node *tmp;
+	tmp = malloc(sizeof(node));
+
+	tmp->data = value;
+
+	tmp->next = top;
+
+	top = tmp;
 }
 
-// Pop am element from the stack and return it 
-struct node* pop(struct node *head, int *element)
+
+/* Pop the top element from the stack and return it 
+** 1. Make a temp node
+** 2. Point this temp node to the top of the stack
+** 3. Store the value of 'data' of this temp node in a var
+** 4. Point the 'top' pointer to the node next to the current top node.
+** 5. Delete the temp node using free.
+** 6. Return the value stored in the var.
+*/
+word_t pop()
 {
-	struct node* tmp = head;
-	*element = head->data;
-	head = head->next;
+	node *tmp;
+	word_t n;
+	tmp = top;
+	n = tmp->data;
+	top = top->next;
 	free(tmp);
-	return head;
+	return n;
 }
 
-// Return the size of the stack as an int
-int getCount(struct node* head)
+/**
+ * This function should return the word at the top of the stack of the current
+ * frame, interpreted as a signed integer.
+ **/
+word_t tos()
+{
+	printf("The top element of the stack is: %d", top->data);
+	return top->data;
+}
+
+bool isEmpty()
+{
+	if(top==NULL)
+		return true;
+	else
+		return false;
+}
+
+// Return the size of the stack as an in
+/* WIP
+int stack_size(struct node* head)
 {
 	int count = 0;
-	struct node* current = head;
-	while (current != NULL)
+	struct node* tmp = head;
+	while (tmp != NULL)
 	{
 		count ++;
-		current = current->next;
+		tmp = tmp->next;
 	}
 	return count;
 }
+
+*/
+
 
 
 struct CURRENT{
@@ -136,9 +177,6 @@ void destroy_ijvm()
 
 void run()
 {
-
-	byte_t stored_byte_argument;
-	byte_t stored_short_argument[2];
 	int arguments_passed = 0;
 
 	for (unsigned int i=0; i<FILEDATA.text_size; i++)
@@ -147,7 +185,8 @@ void run()
 
 		if(byte_argument == true)
 		{
-			stored_byte_argument = current_byte;
+			byte_t stored_byte_argument[] = {0, 0, 0, current_byte};
+			hex_to_string(stored_byte_argument);
 			byte_argument = false;
 			continue;
 		}
@@ -155,13 +194,14 @@ void run()
 		{
 			if (arguments_passed == 0)
 			{
-				stored_short_argument[0] = current_byte;
+				stored_short_argument[2] = current_byte;
 				arguments_passed += 1;
 				continue;
 			}
 			if (arguments_passed == 1)
 			{
-				stored_short_argument[1] = current_byte;
+				stored_short_argument[3] = current_byte;
+				hex_to_string(stored_short_argument);
 				arguments_passed = 0;
 				short_argument = false;
 				continue;
@@ -378,7 +418,21 @@ int text_size()
 	return text_size_int;
 }
 
-void array_as_dec()
+// Convert a hex byte argument to a 32-bit integer
+void convert_to__int(byte_t bytes[])
 {
-	
+	/* Big endianness
+	int result = ((bytes[0] & 0xFF) << 24) | ((bytes[1] & 0xFF) << 16  | ((bytes[2] & 0xFF) << 8) | (bytes[3] & 0xFF);
+	*/
+
+	// Little endianness
+	int result = bytes[0] + (bytes[1] << 8) + (bytes[2] << 16) + (bytes[3] << 24);
+}
+
+void hex_to_string(byte_t byte_array[4])
+{
+	for (int i=0;i<4;i++)
+	{
+		printf("%02x ", byte_array[i]);
+	}
 }
