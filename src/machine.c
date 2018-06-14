@@ -4,11 +4,13 @@
 #include <assert.h>
 #include <limits.h>
 #include <customincludes.h>
+#include <string.h>
 
 int program_counter = 0;
 byte_t current_byte;
 bool byte_argument;
 bool short_argument;
+byte_t current_op;
 byte_t stored_short_argument[4];
 
 // Create a linked list
@@ -35,6 +37,8 @@ void init()
 */
 void push(word_t value)
 {
+	printf("Value to push = %02x\n", value);
+	// What should I assert here? It is a dynamic stack so asserting if the top < STACK_SIZE - 1 is pretty useless...
 	node *tmp;
 	tmp = malloc(sizeof(node));
 
@@ -43,6 +47,9 @@ void push(word_t value)
 	tmp->next = top;
 
 	top = tmp;
+
+	printf("Push successful!\n");
+
 }
 
 
@@ -56,6 +63,7 @@ void push(word_t value)
 */
 word_t pop()
 {
+	//assert(top > 0);
 	node *tmp;
 	word_t n;
 	tmp = top;
@@ -71,6 +79,7 @@ word_t pop()
  **/
 word_t tos()
 {
+	//assert(top > 0);
 	printf("The top element of the stack is: %d", top->data);
 	return top->data;
 }
@@ -178,6 +187,7 @@ void destroy_ijvm()
 void run()
 {
 	int arguments_passed = 0;
+	word_t stored_word_argument;
 
 	for (unsigned int i=0; i<FILEDATA.text_size; i++)
 	{
@@ -185,8 +195,22 @@ void run()
 
 		if(byte_argument == true)
 		{
-			byte_t stored_byte_argument[] = {0, 0, 0, current_byte};
-			hex_to_string(stored_byte_argument);
+			stored_word_argument = (word_t) current_byte;
+
+			// Maybe make this a reusable function.
+			//memcpy(stored_word_argument, stored_byte_argument, sizeof(byte_argument));
+
+			//hex_to_string(stored_word_argument);
+			//printf("The word in hex is: %02x\n", stored_word_argument[0]);
+			
+			switch(current_op)
+			{
+				case 0x10:
+				{
+					push(stored_word_argument);
+					break;
+				}
+			}
 			byte_argument = false;
 			continue;
 		}
@@ -219,6 +243,7 @@ bool step()
 		{
 			printf("BIPUSH \n");
 			program_counter = program_counter + 1;
+			current_op = 0x10;
 			byte_argument = true;
 			break;
 		}
@@ -244,8 +269,8 @@ bool step()
 		case 0xff:
 		{
 			printf("HALT\n");
-			//program_counter = program_counter + 1;
-			//break;
+			program_counter = program_counter + 1;
+			break;
 		}
 		case 0x60:
 		{
