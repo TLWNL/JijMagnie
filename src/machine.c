@@ -70,6 +70,7 @@ word_t pop()
 	n = tmp->data;
 	top = top->next;
 	free(tmp);
+	printf("Pop successful!\n");
 	return n;
 }
 
@@ -274,7 +275,20 @@ bool step()
 		}
 		case 0x60:
 		{
+			word_t firstVal;
+			word_t secondVal;
+			int sum;
+
 			printf("IADD\n");
+			// Pop () Pop (), convert to int, sum, convert back to word_t and push.
+			firstVal = pop();
+			secondVal = pop();
+
+			firstVal = firstVal & 0xFF;
+
+			printf("First val = %02x", firstVal);
+			printf("Second val = %02x", secondVal);
+
 			program_counter = program_counter + 1;
 			break;
 		}
@@ -444,15 +458,15 @@ int text_size()
 }
 
 // Convert a hex byte argument to a 32-bit integer
-void convert_to__int(byte_t bytes[])
+/*void convert_to__int(word_t bytes)
 {
 	/* Big endianness
 	int result = ((bytes[0] & 0xFF) << 24) | ((bytes[1] & 0xFF) << 16  | ((bytes[2] & 0xFF) << 8) | (bytes[3] & 0xFF);
-	*/
+	
 
 	// Little endianness
 	int result = bytes[0] + (bytes[1] << 8) + (bytes[2] << 16) + (bytes[3] << 24);
-}
+}*/
 
 void hex_to_string(byte_t byte_array[4])
 {
