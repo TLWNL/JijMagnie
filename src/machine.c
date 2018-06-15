@@ -457,7 +457,7 @@ int text_size()
 	return text_size_int;
 }
 
-// Convert a hex byte argument to a 32-bit integer
+// Convert a hex byte argument to a 32-bit integer 
 /*void convert_to__int(word_t bytes)
 {
 	/* Big endianness
