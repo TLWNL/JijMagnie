@@ -23,54 +23,54 @@ typedef struct node node;
 
 node *top;
 
-// Initialize the stack
+
 void init()
 {
+	// Initialize the stack
 	top = NULL;
 }
 
-/* Push operation:
-** 1. Make a new node.
-** 2. Give the 'data' of the new node its value.
-** 3. Point the 'next' of the new node to the top of the stack.
-** 4. Make the 'top' pointer point to this new node.
-*/
 void push(word_t value)
 {
 	printf("Value to push = %02x\n", value);
 	// What should I assert here? It is a dynamic stack so asserting if the top < STACK_SIZE - 1 is pretty useless...
+	// Make a new node
 	node *tmp;
 	tmp = malloc(sizeof(node));
 
+	// Give the 'data' of the new node its value
 	tmp->data = value;
 
+	// Point the 'next' of the new node to the top of the stack
 	tmp->next = top;
 
+	// Make the 'top' pointer point to this new node
 	top = tmp;
 
 	printf("Push successful!\n");
-
 }
 
-
-/* Pop the top element from the stack and return it 
-** 1. Make a temp node
-** 2. Point this temp node to the top of the stack
-** 3. Store the value of 'data' of this temp node in a var
-** 4. Point the 'top' pointer to the node next to the current top node.
-** 5. Delete the temp node using free.
-** 6. Return the value stored in the var.
-*/
 word_t pop()
 {
 	//assert(top > 0);
+	// Make a temp node
 	node *tmp;
 	word_t n;
+
+	//Point this temp node to the top of the stack
 	tmp = top;
+
+	// Store the value of 'data' of this temp node in a variable (Note to self: ubigious var name)
 	n = tmp->data;
+
+	// Point the 'top' pointer to the node next to the current top node
 	top = top->next;
+
+	// Delete the temp node using free
 	free(tmp);
 	printf("Pop successful!\n");
+
+	// Return the value stored in the var
 	return n;
 }
 
@@ -85,6 +85,12 @@ word_t tos()
 	return top->data;
 }
 
+word_t *get_stack()
+{
+
+}
+
+
 bool isEmpty()
 {
 	if(top==NULL)
@@ -93,12 +99,11 @@ bool isEmpty()
 		return false;
 }
 
-// Return the size of the stack as an in
-/* WIP
-int stack_size(struct node* head)
+// Return the size of the stack as an int
+int stack_size()
 {
 	int count = 0;
-	struct node* tmp = head;
+	struct node* tmp = top;
 	while (tmp != NULL)
 	{
 		count ++;
@@ -106,10 +111,6 @@ int stack_size(struct node* head)
 	}
 	return count;
 }
-
-*/
-
-
 
 struct CURRENT{
 	word_t magic_number;
@@ -197,12 +198,6 @@ void run()
 		if(byte_argument == true)
 		{
 			stored_word_argument = (word_t) current_byte;
-
-			// Maybe make this a reusable function.
-			//memcpy(stored_word_argument, stored_byte_argument, sizeof(byte_argument));
-
-			//hex_to_string(stored_word_argument);
-			//printf("The word in hex is: %02x\n", stored_word_argument[0]);
 			
 			switch(current_op)
 			{
@@ -238,9 +233,14 @@ void run()
 
 bool step()
 {
+	word_t firstVal;
+	word_t secondVal;
+	word_t result;
+	int int_result;
+
 	switch(current_byte)
 	{
-		case 0x10: // Takes byte arg
+		case 0x10:		// BIPUSH
 		{
 			printf("BIPUSH \n");
 			program_counter = program_counter + 1;
@@ -248,161 +248,200 @@ bool step()
 			byte_argument = true;
 			break;
 		}
-		case 0x59:
+		case 0x59:		// DUP
 		{
 			printf("DUP\n");
 			program_counter = program_counter + 1;
 			break;
 		}
-		case 0xfe:
+		case 0xfe:		// ERR
 		{
 			printf("ERR\n");
 			program_counter = program_counter + 1;
 			break;
 		}
-		case 0xa7:
+		case 0xa7:		// GOTO
 		{
 			printf("GOTO\n");			// Takes short arg ( 2 bytes )
 			program_counter = program_counter + 1;
 			short_argument = true;
 			break;
 		}
-		case 0xff:
+		case 0xff:		// HALT
 		{
 			printf("HALT\n");
 			program_counter = program_counter + 1;
 			break;
 		}
-		case 0x60:
+		case 0x60:		// IADD
 		{
-			word_t firstVal;
-			word_t secondVal;
-			int sum;
-
 			printf("IADD\n");
 			// Pop () Pop (), convert to int, sum, convert back to word_t and push.
 			firstVal = pop();
 			secondVal = pop();
 
-			firstVal = firstVal & 0xFF;
+			int_result = (int8_t) firstVal + (int8_t) secondVal;	
+			printf("Sum = %d\n", int_result);
 
-			printf("First val = %02x", firstVal);
-			printf("Second val = %02x", secondVal);
+			result = (word_t) int_result;
+			push(result);
 
 			program_counter = program_counter + 1;
 			break;
 		}
-		case 0x7e:
+		case 0x7e:		// IAND
 		{
 			printf("IAND\n");
+			// Pop() Pop(), AND operation, push result.
+			firstVal = pop();
+			secondVal = pop();
+			result = firstVal & secondVal;
+			push(result);
 			program_counter = program_counter + 1;
 			break;
 		}
-		case 0x99:
+		case 0x99:		// IFEQ
 		{
 			printf("IFEQ\n");			// Takes short arg 
 			program_counter = program_counter + 1;
 			short_argument = true;
 			break;
 		}
-		case 0x9b:
+		case 0x9b:		// IFLT
 		{
 			printf("IFLT\n");			// Takes short arg 
 			program_counter = program_counter + 1;
 			short_argument = true;
 			break;
 		}
-		case 0x9f:
+		case 0x9f:		// IF_ICMPEQ
 		{
 			printf("IF_ICMPEQ\n");	// Takes short arg 
 			program_counter = program_counter + 1;
 			short_argument = true;
 			break;
 		}
-		case 0x84:
+		case 0x84:		// IINC
 		{
 			printf("IINC\n");			// Takes byte byte arg 
 			program_counter = program_counter + 1;
 			short_argument = true;
 			break;
 		}
-		case 0x15:
+		case 0x15:		// ILOAD
 		{
 			printf("ILOAD\n");		// Takes byte arg
 			program_counter = program_counter + 1;
 			byte_argument = true;
 			break;
 		}
-		case 0xfc:
+		case 0xfc:		// IN	Reads a char from the input and pushes it onto the stack. If no char is available, 0 is pushed. 
 		{
+			char ch;
 			printf("IN\n");
+			while (fgets(ch, sizeof(ch), stdin) != NULL)
+			{
+				if(sscanf(ch, "%c" , &ch) != 1)
+				{
+					int_result = 0;
+					result = (word_t) int_result;
+					push(result);
+				}
+				else
+				{
+					result = (word_t) ch;
+					push(result);
+				}
+			}
+			result = (word_t) ch;
+			push(result);
 			program_counter = program_counter + 1;
 			break;
 		}
-		case 0xb6:
+		case 0xb6:		// INVOKEVIRTUAL
 		{
 			printf("INVOKEVIRTUAL\n");	// Takes short arg
 			program_counter = program_counter + 1;
 			short_argument = true;
 			break;
 		}
-		case 0xb0:
+		case 0xb0:		// IOR
 		{
 			printf("IOR\n");
+			firstVal = pop();
+			secondVal = pop();
+			result = firstVal | secondVal;
+			push(result);
 			program_counter = program_counter + 1;
 			break;
 		}
-		case 0xac:
+		case 0xac:		// IRETURN
 		{
 			printf("IRETURN\n");
 			program_counter = program_counter + 1;
 			break;
 		}
-		case 0x36:
+		case 0x36:		// ISTORE
 		{
 			printf("ISTORE\n");			// Takes byte arg
 			program_counter = program_counter + 1;
 			byte_argument = true;
 			break;
 		}
-		case 0x64:
+		case 0x64:		// ISUB
 		{
 			printf("ISUB\n");
+
+			firstVal = pop();
+			secondVal = pop();
+
+			int_result = (int8_t) firstVal - (int8_t) secondVal;
+			printf("Result = %d\n", int_result);
+			result = (word_t) int_result;
+			push(result);
+
 			program_counter = program_counter + 1;
 			break;
 		}
-		case 0x13:
+		case 0x13:		// LDC_W
 		{
 			printf("LDC_W\n");			// Takes short arg
 			program_counter = program_counter + 1;
 			short_argument = true;
 			break;
 		}
-		case 0x00:
+		case 0x00:		// NOP
 		{
 			printf("NOP\n");
 			program_counter = program_counter + 1;			// Does the program counter get increased after 00?
 			break;
 		}
-		case 0xfd:
+		case 0xfd:		// OUT
 		{
 			printf("OUT\n");
+			firstVal = pop();
+			printf("%X\n", firstVal);
 			program_counter = program_counter + 1;
 			break;
 		}
-		case 0x57:
+		case 0x57:		// POP
 		{
 			printf("POP\n");
+			pop();
 			program_counter = program_counter + 1;
 			break;
 		}
-		case 0x5f:
+		case 0x5f:		// SWAP
 		{
 			printf("SWAP\n");
+			firstVal = pop();
+			secondVal = pop();
+			push(firstVal);
+			push(secondVal);
 			program_counter = program_counter + 1;
 			break;
 		}
-		case 0xc4:
+		case 0xc4:		// WIDE
 		{
 			printf("WIDE\n");
 			program_counter = program_counter + 1;
@@ -457,17 +496,26 @@ int text_size()
 	return text_size_int;
 }
 
+<<<<<<< HEAD
 // Convert a hex byte argument to a 32-bit integer 
 /*void convert_to__int(word_t bytes)
+=======
+/*
+// Convert a hex byte argument to a 32-bit integer
+void convert_array_to_lil_end_int(byte_t bytes[4])
+>>>>>>> 754429a2ea6e632bc80308f7bc477060dae89761
 {
-	/* Big endianness
-	int result = ((bytes[0] & 0xFF) << 24) | ((bytes[1] & 0xFF) << 16  | ((bytes[2] & 0xFF) << 8) | (bytes[3] & 0xFF);
-	
-
 	// Little endianness
 	int result = bytes[0] + (bytes[1] << 8) + (bytes[2] << 16) + (bytes[3] << 24);
-}*/
+}
 
+
+void convert_array_to_big_end_int(byte_t bytes[4])
+{
+	// Big endianness
+	int result = ((bytes[0] & 0xFF) << 24) | ((bytes[1] & 0xFF) << 16  | ((bytes[2] & 0xFF) << 8) | (bytes[3] & 0xFF));
+}
+*/
 void hex_to_string(byte_t byte_array[4])
 {
 	for (int i=0;i<4;i++)
@@ -475,3 +523,4 @@ void hex_to_string(byte_t byte_array[4])
 		printf("%02x ", byte_array[i]);
 	}
 }
+
